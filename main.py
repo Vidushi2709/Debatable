@@ -34,46 +34,67 @@ def chat_with_gemini(history, user_input):
     messages = history + [{"role": "user", "parts": [user_input]}]
     response = model.generate_content(messages)
     return response.text
+
+#judge
+JUDGE_PROMPT = (
+    "You are a fair,funny and witty debate judge. Given the following conversation between a human and an AI, "
+    "analyze their arguments and declare a winner. Be concise and clear in your judgment, no more than 2-3 sentences.\n\n"
+    "Criteria: strength of arguments, creativity, consistency, and logical reasoning.\n"
+    "Conversation:\n"
+)
+
+def judge_debate(conversation_history):
+    full_convo = ""
+    for turn in conversation_history:
+        role = turn["role"].capitalize()
+        content = turn["parts"][0]
+        full_convo += f"{role}: {content}\n"
+
+    judgment_input = JUDGE_PROMPT + full_convo
+    judge_model = genai.GenerativeModel(MODEL_NAME)
+    response = judge_model.generate_content(judgment_input)
+    return response.text
+
 def main():
-    print("🎤 Welcome to the Gemini Debate Bot!")
-    topic = input("Enter a debate topic: ").strip()
+    print("🎤 Welcome to the Debate Chatbot (Gemini)! Type 'exit' to quit or 'judge' to get a verdict.\n")
+    topic = input("Enter the topic you want to debate on: ").strip()
     if not topic:
-        print("No topic provided. Exiting.")
+        print("No topic entered. Exiting.")
         return
 
     print("\nChoose difficulty: easy / medium / hard")
     difficulty = input("Your choice: ").strip().lower()
     difficulty_prompt = DIFFICULTY_LEVELS.get(difficulty, DIFFICULTY_LEVELS["medium"])
 
-    print("\nChoose a style: polite / sassy / sarcastic/ dramtic/ intellectual/ meme")
+    print("\nChoose a style: polite / sassy / sarcastic / dramatic / intellectual / meme")
     style = input("Your choice: ").strip().lower()
     style_prompt = STYLE_MODES.get(style, STYLE_MODES["polite"])
 
     # Build system prompt
-    system_prompt = (
+    SYSTEM_PROMPT = (
         "You are a debate champion and a master of argumentation. "
-        "As a debate assistant, you are here to challenge the user on complex topics and "
-        "stimulate an intense and thought-provoking conversation. Your attitude is challenging, "
-        "designed to provoke and stimulate critical thinking, pushing the user to defend their stance rigorously."
-        "respond in short, give some one-liners also"
-        f"Difficulty: {difficulty.capitalize()}\n"
-        f"Style: {style.capitalize()}\n\n"
-        f"{difficulty_prompt}\n{style_prompt}"
+        "Your job is to challenge the user on complex topics and stimulate a thought-provoking conversation. "
+        "keep your conversationn slighlty shorter, do not give multiple paragraphs in one go"
+        f"{difficulty_prompt} {style_prompt}"
     )
 
     history = []
-    first_input = f"{system_prompt}\n\nDebate Topic: {topic}\nStart the debate."
+    first_input = f"{SYSTEM_PROMPT}\n\nThe topic for debate is: {topic}\nStart the debate."
     bot_message = chat_with_gemini(history, first_input)
-    print(f"\nBot: {bot_message}")
-
+    print(f"Bot: {bot_message}")
     history.append({"role": "user", "parts": [first_input]})
     history.append({"role": "model", "parts": [bot_message]})
 
     while True:
-        user_input = input("\nYou: ")
+        user_input = input("You: ").strip()
         if user_input.lower() == "exit":
-            print("👋 Goodbye, debater!")
+            print("Goodbye!")
             break
+        elif user_input.lower() == "judge":
+            print("\n🧑‍⚖️ JUDGE SAYS:")
+            verdict = judge_debate(history)
+            print(verdict)
+            continue
         history.append({"role": "user", "parts": [user_input]})
         bot_message = chat_with_gemini(history, user_input)
         print(f"Bot: {bot_message}")
