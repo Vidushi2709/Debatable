@@ -69,16 +69,6 @@ streamlit run main.py
 
 ---
 
-## 🙋‍♀️ About
-
-Created by **Vidushi Anand** as a passion project to explore:
-
-* Prompt engineering
-* Human-AI interaction
-* Decision-making using LLMs
-
----
-
 ## 📄 License
 
 This project is open-source under the MIT License.
